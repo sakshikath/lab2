@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Cat Breed Selector</title>
+  <style>
+    /* Basic styling for layout and readability */
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    button { margin: 5px; }
+    #output { margin-top: 20px; white-space: pre-wrap; }
+  </style>
+</head>
+<body>
+  <h1>Cat Breed Selector</h1>
+
+  <!-- Button to display all cat breed names -->
+  <button onclick="showAllNames()">All Names</button><br><br>
+
+  <!-- Input field to filter breeds by number of health issues -->
+  Health Issues: <input type="number" id="healthInput" />
+  <button onclick="filterByHealthIssue()">Search</button><br><br>
+
+  <!-- Weight toggle with radio buttons for units -->
+  <button onclick="toggleWeight()">Weight</button>
+  <label><input type="radio" name="unit" value="imperial" checked onchange="toggleWeight()"> Imperial</label>
+  <label><input type="radio" name="unit" value="metric" onchange="toggleWeight()"> Metric</label><br><br>
+
+  <!-- Button to display intelligence and child-friendliness ratings -->
+  <button onclick="showIntelligenceAndFriendliness()">Intelligence – Friendly</button><br><br>
+
+  <!-- Button to calculate average intelligence across all breeds -->
+  <button onclick="averageIntelligence()">Average Intelligence</button><br><br>
+
+  <!-- Button to calculate average intelligence for child-friendly breeds only -->
+  <button onclick="averageIntelligenceChildFriendly()">Average Intelligence for Child Friendly</button><br><br>
+
+  <!-- Output container for displaying results -->
+  <div id="output">Loading data...</div>
+
+  <script>
+    let catData = [];
+
+    // Fetch cat breed data from the Cat API
+    fetch('https://api.thecatapi.com/v1/breeds')
+      .then(res => res.json())
+      .then(data => {
+        catData = data; // Store data in global variable
+        document.getElementById('output').textContent = 'Data loaded. Choose an option.';
+      })
+      .catch(err => {
+        document.getElementById('output').textContent = 'Failed to load cat data.';
+        console.error(err);
+      });
+
+    // Function to display all cat breed names
+    function showAllNames() {
+      const names = catData.map(cat => cat.name);
+      document.getElementById('output').textContent = names.join('\n');
+    }
+
+    // Function to filter and show breeds with a specific number of health issues
+    function filterByHealthIssue() {
+      const val = parseInt(document.getElementById('healthInput').value);
+      if (isNaN(val)) return; // If input is not a number, exit
+      const filtered = catData.filter(cat => cat.health_issues === val).map(cat => cat.name);
+      document.getElementById('output').textContent = filtered.length ? filtered.join('\n') : 'No cats found with that health issue.';
+    }
+
+    // Function to toggle and display weight in selected unit (imperial or metric)
+    function toggleWeight() {
+      const unit = document.querySelector('input[name="unit"]:checked').value;
+      const list = catData.map(cat => `${cat.name}: ${cat.weight[unit]} ${unit === 'imperial' ? 'lbs' : 'kg'}`);
+      document.getElementById('output').textContent = list.join('\n');
+    }
+
+    // Function to show intelligence and child-friendliness of all breeds
+    function showIntelligenceAndFriendliness() {
+      const list = catData.map(cat => `${cat.name} | I: ${cat.intelligence} | F: ${cat.child_friendly}`);
+      document.getElementById('output').textContent = list.join('\n');
+    }
+
+    // Function to calculate and display the average intelligence across all breeds
+    function averageIntelligence() {
+      const total = catData.reduce((sum, cat) => sum + cat.intelligence, 0);
+      const avg = (total / catData.length).toFixed(2);
+      document.getElementById('output').textContent = `Average Intelligence: ${avg}`;
+    }
+
+    // Function to calculate and display the average intelligence of child-friendly breeds (rating ≥ 4)
+    function averageIntelligenceChildFriendly() {
+      const friendlyCats = catData.filter(cat => cat.child_friendly >= 4);
+      const total = friendlyCats.reduce((sum, cat) => sum + cat.intelligence, 0);
+      const avg = (total / friendlyCats.length).toFixed(2);
+      document.getElementById('output').textContent = `Average Intelligence (Child Friendly): ${avg}`;
+    }
+  </script>
+</body>
+</html>
